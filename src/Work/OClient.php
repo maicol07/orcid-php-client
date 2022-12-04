@@ -7,249 +7,159 @@
 
 namespace Orcid\Work;
 
-use Exception;
+use DOMException;
+use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
+use RuntimeException;
 use Orcid\Oauth;
-use Orcid\Work\Create\Work;
-use Orcid\Work\Create\Works;
+
+use function count;
+use function is_array;
 
 class OClient
 {
-    /**
-     * @var Oauth
-     */
-    private $oauth = null;
+    private Oauth $oauth;
 
     /**
      * OClient constructor.
-     * @param Oauth $oauth
-     * @param bool $useMemberApi
-     * @throws Exception
+     *
+     * @throws RuntimeException
      */
-    public function __construct(Oauth $oauth, $useMemberApi=true)
+    public function __construct(Oauth $oauth, bool $use_members_api = true)
     {
-        try {
-            $useMemberApi ? $oauth->useMembersApi() : $oauth->usePublicApi();
-            $this->setOauth($oauth);
-        } catch (Exception $e) {
-            error_log("Panic in ".get_class($this)." : ".$e->getMessage());
-            throw $e;
-        }
-    }
+        $use_members_api ? $oauth->membersApi(true) : $oauth->membersApi(false);
 
-    /**
-     * @param Oauth $oauth
-     * @throws Exception
-     */
-    protected function setOauth(Oauth $oauth)
-    {
-        if (!$oauth->getAccessToken()) {
-            throw new Exception('You must first set an access token or authenticate to exchange Work with ORCID');
+        if (!$oauth->accessToken()) {
+            throw new RuntimeException(
+                'You must first set an access token or authenticate to exchange Work with ORCID'
+            );
         }
         $this->oauth = $oauth;
     }
 
-
     /**
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
+     * @throws JsonException
      */
-    public function ReadSummary($dataIsJsonFormat=true)
+    public function readSummary(bool $json_response = true): OResponse
     {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        $this->oauth->http->initialize(true);
-        $response=  $this->oauth->http->setUrl($this->oauth->getApiEndpoint('works'))
-            ->setHeader([
-                'Content-Type'  => $contentType,
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken()
-            ])->execute();
+        $contentType = $json_response ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->get($this->oauth->getApiEndpoint('works'));
 
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
+        return new OResponse($response);
     }
 
     /**
-     * @param int|string $putCode
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
+     * @throws JsonException
      */
-    public function readSingle($putCode, $dataIsJsonFormat=true)
+    public function readSingle(int|string $put_code, bool $data_json_format = true): OResponse
     {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        $this->oauth->http->initialize(true);
-        $response=  $this->oauth->http->setUrl($this->oauth->getApiEndpoint('work').'/'.$putCode)
-            ->setHeader([
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken(),
-                'Content-Type'  => $contentType
-            ])->execute();
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
+        $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->get($this->oauth->getApiEndpoint('work') . '/' . $put_code);
+        return new OResponse($response);
     }
 
     /**
-     * @param array $worksIdArray
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
-     * @throws Exception
+     * @param int[]|string[] $put_codes
+     * @throws JsonException
      */
-    public function readMultiple(array $worksIdArray, $dataIsJsonFormat=true)
+    public function readMultiple(array $put_codes, bool $data_json_format = true): OResponse
     {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        if (empty($worksIdArray)) {
-            throw new Exception("the work put-code array (worksIdArray) must not be empty");
+        $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+        if (empty($put_codes)) {
+            throw new RuntimeException('the work put-code array (worksIdArray) must not be empty');
         }
-        if (count($worksIdArray)>50) {
-            throw new Exception("you can't read more than 50 Work your work id array length is more than 50");
+        if (count($put_codes) > 50) {
+            throw new RuntimeException("you can't read more than 50 Work your work id array length is more than 50");
         }
 
-        $workList="";
-        foreach ($worksIdArray as $workId) {
-            $workList.=(string)$workId.',';
-        }
-        $workList=rtrim($workList, ',');
-        $response=$this->oauth->http->initialize(true)
-            ->setUrl($this->oauth->getApiEndpoint('works').'/'.$workList)
-            ->setHeader([
-                'Content-Type'  => $contentType,
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken()
-            ])->execute();
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
+        $put_codes_list = implode(',', $put_codes);
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->get($this->oauth->getApiEndpoint('works') . '/' . $put_codes_list);
+        return new OResponse($response);
     }
 
     /**
-     * @param int|string|array $putCode
-     * @return Oresponse
-     * @throws Exception
+     * @param int|string|int[]|string[] $putCode
+     * @throws JsonException|GuzzleException
      */
-    public function read($putCode)
+    public function read(int|string|array $putCode): OResponse
     {
-        if (is_array($putCode)) {
-            return  $this->readMultiple($putCode);
-        }
-        return $this->readSingle($putCode);
+        return is_array($putCode) ? $this->readMultiple($putCode) : $this->readSingle($putCode);
     }
 
-
     /**
-     * @param Work|Works|Work[] $works
-     * @return Oresponse
-     * @throws Exception
+     * @throws GuzzleException|JsonException|DOMException
      */
-    public function send($works)
+    public function send(Work|Works $works): OResponse
     {
+        $data = $works->getXMLData();
         if ($works instanceof Work) {
-            $data=$works->getXMLData();
-            return  $this->postOne($data);
-        } elseif ($works instanceof works) {
-            $data=$works->getXMLData();
-            return  $this->postMultiple($data);
-        } elseif (is_array($works)) {
-            $newWorks=new Works();
-            foreach ($works as $work) {
-                if ($work instanceof Work) {
-                    $newWorks->append($work);
-                } else {
-                    throw new Exception("All values of your array must be instance of Work");
-                }
-            }
-            $data=$newWorks->getXMLData();
-            return  $this->postMultiple($data);
-        } else {
-            throw new Exception("Orcid client Send Method parameter can  be :
-             instance of Work, instance of works or array of work instance. Your work(s) type is not accepted ");
+            return $this->postOne($data);
         }
+
+        return $this->postMultiple($data);
     }
 
     /**
-     * @param $data
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
+     * @throws GuzzleException|JsonException
      */
-    protected function postOne(string $data, $dataIsJsonFormat=false)
+    protected function postOne(string $data, bool $json_data_format = false): OResponse
     {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        $response= $this->oauth->http->initialize(true)
-            ->setHeader([
-                'Content-Type'  => $contentType,
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken()
-            ])
-            ->setUrl($this->oauth->getApiEndpoint('work'))
-            ->setPostData($data)
-            ->execute();
-
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
+        $contentType = $json_data_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->post($this->oauth->getApiEndpoint('work'), $data);
+        return new OResponse($response);
     }
 
     /**
-     * @param $data
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
+     * @throws JsonException
      */
-    protected function postMultiple(string $data, $dataIsJsonFormat=false)
+    protected function postMultiple(string $data, bool $data_json_format = false): OResponse
     {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        $response=$this->oauth->http->initialize(true)
-            ->setUrl($this->oauth->getApiEndpoint('works'))
-            ->setPostData($data)
-            ->setHeader([
-                'Content-Type'  => $contentType,
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken()
-            ])->execute();
-
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
+        $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->post($this->oauth->getApiEndpoint('works'), $data);
+        return new OResponse($response);
     }
 
     /**
-     * @param Work $work
-     * @return Oresponse
-     * @throws Exception
+     * @throws DOMException|JsonException
      */
-    public function update(Work $work)
+    public function update(Work $work, bool $data_json_format = false): OResponse
     {
-        $putCode=$work->getPutCode();
-        $data=$work->getXMLData();
-        return$this->updateOneWork($data, $putCode);
+        $putCode = $work->putCode();
+        $data = $work->getXMLData();
+        $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->post($this->oauth->getApiEndpoint('work/' . $putCode), $data);
+        return new OResponse($response);
     }
 
     /**
-     * @param string $data //xml string
-     * @param $putCode
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
+     * @throws JsonException
      */
-    protected function updateOneWork(string $data, $putCode, $dataIsJsonFormat=false)
+    public function delete(int|string $putCode, bool $data_json_format = true): OResponse
     {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        $response=$this->oauth->http->initialize(true)->setPut()
-            ->setUrl($this->oauth->getApiEndpoint('work/'.$putCode))
-            ->setPostData($data)
-            ->setHeader([
-                'Content-Type'  => $contentType,
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken()
-            ])->execute();
-
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
-    }
-
-    /**
-     * @param $putCode
-     * @param bool $dataIsJsonFormat
-     * @return Oresponse
-     */
-    public function delete($putCode, $dataIsJsonFormat=true)
-    {
-        $contentType=$dataIsJsonFormat ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-        $response=$this->oauth->http->initialize(true)->setDelete()
-            ->setUrl($this->oauth->getApiEndpoint('work/'.$putCode))
-            ->setHeader([
-                'Content-Type'  => $contentType,
-                'Authorization' => 'Bearer ' . $this->oauth->getAccessToken()
-            ])->execute();
-
-        $infos=$this->oauth->http->getResponseInfos();
-        return  new Oresponse($response, $infos);
+        $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
+        $response = $this->oauth->client()
+            ->accept($contentType)
+            ->withToken($this->oauth->accessToken())
+            ->delete($this->oauth->getApiEndpoint('work/' . $putCode));
+        return new OResponse($response);
     }
 }

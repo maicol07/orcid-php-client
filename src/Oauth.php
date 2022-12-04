@@ -1,543 +1,189 @@
-<?php
-/**
- * @package   orcid-php-client
- * @author   Kouchoanou Théophane <theophane.kouchoanou@ccsd.cnrs.fr | theophane_malo@yahoo.fr>
- */
+<?php /** @noinspection PhpUnusedprotectedFieldInspection */
 
 namespace Orcid;
 
-use Orcid\Http\Curl;
-use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+
+use Illuminate\Http\Client\Factory;
+use Illuminate\Http\Client\PendingRequest;
+use JsonException;
+use RuntimeException;
+
+use function strlen;
+
+const ORCID_API_HOSTNAME = 'api.orcid.org/v3.0/';
+const ORCID_SANDBOX_HOSTNAME = 'sandbox.orcid.org/v3.0/';
 
 /**
- * Orcid api oauth class
- **/
-class Oauth
+ * Orcid api oauth class.
+ *
+ * @method string|self clientId(string $value = null) Sets the client ID.
+ * @method string|self clientSecret(string $value = null) Sets or get the client secret.
+ * @method string|self orcid(string $value = null) Sets or get the orcid ID. Use this to pre-fill the sign-in page shown to the user.
+ * @method string|self name(string $value = null) Sets or get the username.
+ * @method string|self email(string $value = null) Sets or get the user email. Use this to pre-fill the email address on the login/registration form that ORCID will present when the user is taken to their site for authentication/registration.
+ * @method string|self familyNames(string $value = null) Sets or get the user family names. Use this to pre-fill the family names on the login/registration form that ORCID will present when the user is taken to their site for authentication/registration.
+ * @method string|self givenNames(string $value = null) Sets or get the user given names. Use this to pre-fill the given names on the login/registration form that ORCID will present when the user is taken to their site for authentication/registration.
+ * @method bool|self membersApi(bool $value = null) Check if the api is members api or not or set it to use members api or public api.
+ * @method bool|self sandbox(bool $value = null) Check if the environment is sandbox or not or set it to use sandbox or production environment.
+ * @method ApiScopes[]|self scopes(ApiScopes ...$value = null) Sets or get the oauth scope. This is the scope of the permissions you'll be requesting from the user. See ORCID documentation for options and more details. Although the doc is somewhat unclear, I don't think you can request more than '/authorize' if you intend to use the public api.
+ * @method string|self state(string $value = null) Sets or get the oauth state. This isn't necessarily required, but serves as a CSRF check, as well as an easy way to retain information between the initial login redirect and the user coming back to your site. In theory, you should set this and then verify it after it comes back.
+ * @method string|self redirectUri(string $value = null) Sets or get the oauth redirect uri. This is where the user will come back to after their interaction with the ORCID login/registration page.
+ * @method string|self accessToken(string $value = null) Sets or get the oauth access token. This is the token you'll use to make requests to the ORCID api.
+ * @method string|self refreshToken(string $value = null) Sets or get the oauth refresh token.
+ * @method string|self expiresIn(string $value = null) Sets or get the oauth expires in.
+ * @method bool|self showLogin(bool $value = null) Sets the show_login flag to tell ORCID to show the login page, rather than the registration page when the user initially arrives.
+ * @method array|self authenticateData(array $value = null) Sets the authenticate_data flag to tell ORCID to show the login page, rather than the registration page when the user initially arrives.
+ */
+class Oauth extends DynamicClass
 {
-    /**
-     * API endpoint constants
-     **/
-    public const HOSTNAME  = 'orcid.org';
-    public const AUTHORIZE = 'oauth/authorize';
-    public const TOKEN     = 'oauth/token';
-    public const VERSION   = '2.0';
+    protected bool $members_api = false;
+    protected bool $sandbox = false;
 
     /**
-     * The http tranport object
-     *
-     * @var  object
-     **/
-    public $http = null;
-
-    /**
-     * The ORCID api access level
-     *
-     * @var  string
-     **/
-    private $level = 'pub';
-
-    /**
-     * The ORCID environment type
-     *
-     * @var  string
-     **/
-    private $environment = '';
-
-    /**
-     * The oauth client ID
-     *
-     * @var  string
-     **/
-    private $clientId = null;
-
-    /**
-     * The oauth client secret
-     *
-     * @var  string
-     **/
-    private $clientSecret = null;
-
-    /**
-     * The oauth request scope
-     *
-     * @var  string
-     **/
-    private $scope = null;
-
-    /**
-     * The oauth request state
-     *
-     * @var  string
-     **/
-    private $state = null;
-
-    /**
-     * The oauth redirect URI
-     *
-     * @var  string
-     **/
-    private $redirectUri = null;
-
-    /**
-     * The login/registration page email address
-     *
-     * @var  string
-     **/
-    private $email = null;
-
-    /**
-     * The login/registration page orcid
-     *
-     * @var  string
-     **/
-    private $orcid = null;
-
-    /**
-     * The login/registration page family name
-     *
-     * @var  string
-     **/
-    private $familyNames = null;
-
-    /**
-     * The login/registration page given name
-     *
-     * @var  string
-     **/
-    private $givenNames = null;
-
-    /**
-     * Whether or not to show the login page as opposed to the registration page
-     *
-     * @var  bool
-     **/
-    private $showLogin = false;
-
-    /**
-     * The oauth access token
-     *
-     * @var  string
-     **/
-    private $accessToken = null;
-    /**
-     * @var array
+     * The oauth request scopes
+     * @var ApiScopes[]
      */
-    private $authenticateData=null;
-    /**
-     * @var string
-     */
-    private $refreshToken=null;
-    /**
-     * @var int
-     */
-    private $expireIn=0;
-    /**
-     * @var string
-     */
-    private $name=null;
-    /**
-     * Constructs a new instance
-     *
-     * @param   object  $http  a request tranport object to inject
-     * @return  void
-     **/
-    public function __construct($http = null)
-    {
-        $this->http = $http ?: new Curl();
+    protected array $scopes = [];
+
+    /** The oauth request state */
+    protected string $state;
+
+    /** The oauth redirect URI */
+    protected string $redirect_uri;
+
+    /** The login/registration page email address */
+    protected string $email;
+
+    /** The login/registration page orcid */
+    protected string $orcid;
+
+    /** The login/registration page family name */
+    protected string $family_names;
+
+    /** The login/registration page given name */
+    protected string $given_names;
+
+    /** Whether to show the login page as opposed to the registration page. */
+    protected bool $show_login = false;
+
+    /** The oauth access token */
+    protected string $access_token;
+    protected array $authenticate_data;
+    protected string $refresh_token;
+    protected int $expires_in = 0;
+    protected string $name;
+
+    public function __construct(
+        protected string $client_id,
+        protected string $client_secret,
+    ) {
+        /** @noinspection UnusedFunctionResultInspection */
+        $this->clientId($client_id)
+            ->clientSecret($client_secret);
     }
 
-    /**
-     * Sets the oauth instance to use the public api (when needed)
-     *
-     * @return  $this
-     **/
-    public function usePublicApi()
+    protected function _property_setter(string $property, array $arguments): void
     {
-        $this->level = 'pub';
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth instance to use the members api (when needed)
-     *
-     * @return  $this
-     **/
-    public function useMembersApi()
-    {
-        $this->level = 'api';
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth instance to use the production environment
-     *
-     * @return  $this
-     **/
-    public function useProductionEnvironment()
-    {
-        $this->environment = '';
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth instance to use the sandbox environment
-     *
-     * @return  $this
-     **/
-    public function useSandboxEnvironment()
-    {
-        $this->environment = 'sandbox';
-
-        return $this;
-    }
-
-    /**
-     * Sets the client ID for future use
-     *
-     * @param   string  $id  the client id
-     * @return  $this
-     **/
-    public function setClientId($id)
-    {
-        $this->clientId = trim($id);
-
-        return $this;
-    }
-
-    /**
-     * Sets the client secret for future use
-     *
-     * @param   string  $secret  the client secret
-     * @return  $this
-     **/
-    public function setClientSecret($secret)
-    {
-        $this->clientSecret = trim($secret);
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth scope
-     *
-     * This is the scope of the permissions you'll be requesting from the user.
-     * See ORCID documentation for options and more details.  Though the doc
-     * is somewhat unclear, I don't think you can request more than '/authorize'
-     * if you intend to use the public api.
-     *
-     * @param   string  $scope  the request scope
-     * @return  $this
-     **/
-    public function setScope($scope)
-    {
-        $this->scope = $scope;
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth state
-     *
-     * This isn't necessarily required, but serves as a CSRF check,
-     * as well as an easy way to retain information between the inital
-     * login redirect and the user coming back to your site.
-     *
-     * In theory, you should set this and then verify it after it comes back.
-     *
-     * @param   string  $state  the request state
-     * @return  $this
-     **/
-    public function setState($state)
-    {
-        $this->state = $state;
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth redirect URI
-     *
-     * This is where the user will come back to after their interaction
-     * with the ORCID login/registration page
-     *
-     * @param   string  $redirectUri  the redirect uri
-     * @return  $this
-     **/
-    public function setRedirectUri($redirectUri)
-    {
-        $this->redirectUri = $redirectUri;
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth transaction email address
-     *
-     * Use this to pre-fill the email address on the login/registration form
-     * that ORCID will present when the user is taken to their site for
-     * authentication/registration.
-     *
-     * @param   string  $email  the user's email address (not required)
-     * @return  $this
-     **/
-    public function setEmail($email)
-    {
-        $this->email = $email;
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth transaction ORCID iD
-     *
-     * Use this to pre-fill the sign in page shown to the user.
-     *
-     * @param   string  $orcid  the user's ORCID iD
-     * @return  $this
-     **/
-    public function setOrcid($orcid)
-    {
-        $this->orcid = $orcid;
-
-        return $this;
-    }
-
-    /**
-     * @param string $refreshToken
-     * @return Oauth
-     */
-    public function setRefreshToken(string $refreshToken)
-    {
-        $this->refreshToken = $refreshToken;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRefreshToken()
-    {
-        return $this->refreshToken;
-    }
-
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return int
-     */
-    public function getExpireIn()
-    {
-        return $this->expireIn;
-    }
-
-    /**
-     * @param int $expireIn
-     * @return Oauth
-     */
-    public function setExpireIn(int $expireIn)
-    {
-        $this->expireIn = $expireIn;
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     * @return Oauth
-     */
-    public function setName(string $name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-
-    /**
-     * Gets the ORCID iD
-     *
-     * @return  string
-     **/
-    public function getOrcid()
-    {
-        return $this->orcid;
-    }
-
-    /**
-     * @return object
-     */
-    public function getHttp()
-    {
-        return $this->http;
-    }
-    /**
-     * Sets the registration page family names
-     *
-     * @param   string  $familyNames  the registration page family names
-     * @return  $this
-     **/
-    public function setFamilyNames($familyNames)
-    {
-        $this->familyNames = $familyNames;
-
-        return $this;
-    }
-
-    /**
-     * Sets the registration page given names
-     *
-     * @param   string  $givenNames  the registration page given names
-     * @return  $this
-     **/
-    public function setGivenNames($givenNames)
-    {
-        $this->givenNames = $givenNames;
-
-        return $this;
-    }
-
-    /**
-     * Sets the show_login flag to tell ORCID to show the login page, rather than
-     * the registration page when the user initially arrives
-     *
-     * @return  $this
-     **/
-    public function showLogin()
-    {
-        $this->showLogin = true;
-
-        return $this;
-    }
-
-    /**
-     * Sets the oauth access token
-     *
-     * @param   string  $token  the access token to set
-     * @return  $this
-     **/
-    public function setAccessToken($token)
-    {
-        $this->accessToken = $token;
-
-        return $this;
-    }
-
-    /**
-     * Grabs the oauth access token
-     *
-     * @return  string
-     **/
-    public function getAccessToken()
-    {
-        return $this->accessToken;
+        $value = $arguments[0];
+        $value = match ($property) {
+            'client_id', 'client_secret', 'orcid' => trim($value),
+            'scopes' => [...$arguments],
+            default => $value
+        };
+        parent::_property_setter($property, [$value]);
     }
 
     /**
      * Gets the authorization URL based on the instance parameters
      *
-     * @return  string
-     *
-     * @throws Exception
+     * @throws RuntimeException
      */
-    public function getAuthorizationUrl()
+    public function getAuthorizationUrl(): string
     {
         // Check for required items
-        if (!$this->clientId) {
-            throw new Exception('Client ID is required');
+        if (!$this->clientId()) {
+            throw new RuntimeException('Client ID is required');
         }
-        if (!$this->scope) {
-            throw new Exception('Scope is required');
+        if (!$this->scopes()) {
+            throw new RuntimeException('Scope is required');
         }
-        if (!$this->redirectUri) {
-            throw new Exception('Redirect URI is required');
+        if (!$this->redirectUri()) {
+            throw new RuntimeException('Redirect URI is required');
         }
 
-        // Start building url (enpoint is the same for public and member APIs)
-        $url  = 'https://';
-        $url .= (!empty($this->environment)) ? $this->environment . '.' : '';
-        $url .= self::HOSTNAME . '/' . self::AUTHORIZE;
-        $url .= '?client_id='    . $this->clientId;
-        $url .= '&scope='        . $this->scope;
-        $url .= '&redirect_uri=' . urlencode($this->redirectUri);
-        $url .= '&response_type=code';
 
-        // Process non-required fields
-        $url .= ($this->showLogin) ? '&show_login=true' : '';
-        $url .= (isset($this->state)) ? '&state=' . $this->state : '';
-        $url .= (isset($this->familyNames)) ? '&family_names=' . $this->familyNames : '';
-        $url .= (isset($this->givenNames)) ? '&given_names=' . $this->givenNames : '';
-        $url .= (isset($this->email)) ? '&email=' . urlencode($this->email) : '';
-
-        return $url;
+        // Start building url (endpoint is the same for public and member APIs)
+        return $this->getApiEndpoint('oauth/authorize') . http_build_query([
+            'client_id' => $this->clientId(),
+            'response_type' => 'code',
+            'scope' => implode(' ', $this->scopes()),
+            'redirect_uri' => $this->redirectUri(),
+            'state' => $this->state(),
+            'show_login' => $this->showLogin(),
+            'orcid' => $this->orcid(),
+            'email' => $this->email(),
+            'family_names' => $this->familyNames(),
+            'given_names' => $this->givenNames(),
+        ]);
     }
 
     /**
      * Takes the given code and requests an auth token
      *
-     * @param   string  $code  the oauth code needed to request the access token
+     * @param string $code the oauth code needed to request the access token
      * @return  $this
-     * @throws  Exception
+     * @throws  RuntimeException
      **/
-    public function authenticate($code)
+    public function authenticate(string $code): self
     {
         // Validate code
-        if (!$code || strlen($code) != 6) {
-            throw new Exception('Invalid authorization code');
+        if (!$code || strlen($code) !== 6) {
+            throw new RuntimeException('Invalid authorization code');
         }
 
         // Check for required items
-        if (!$this->clientId) {
-            throw new Exception('Client ID is required');
+        if (!$this->clientId()) {
+            throw new RuntimeException('Client ID is required');
         }
-        if (!$this->clientSecret) {
-            throw new Exception('Client secret is required');
+        if (!$this->clientSecret()) {
+            throw new RuntimeException('Client secret is required');
         }
         /**
          * if (!$this->redirectUri) {
-                   throw new Exception('Redirect URI is required');
-         }
+         * throw new Exception('Redirect URI is required');
+         * }
          * */
 
         $fields = [
-            'client_id'     => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'code'          => $code,
-         //   'redirect_uri'  => urlencode($this->redirectUri),
-            'grant_type'    => 'authorization_code'
+            'client_id' => $this->clientId(),
+            'client_secret' => $this->clientSecret(),
+            'code' => $code,
+            //   'redirect_uri'  => urlencode($this->redirectUri),
+            'grant_type' => 'authorization_code'
         ];
 
-        $url  = 'https://';
-        $url .= $this->level . '.';
-        $url .= (!empty($this->environment)) ? $this->environment . '.' : '';
-        $url .= self::HOSTNAME . '/' . self::TOKEN;
+        $response = $this->client()
+            ->acceptJson()
+            ->asForm()
+            ->post($this->getApiEndpoint('oauth/token'), $fields);
 
-        $this->http->setUrl($url)
-                   ->setPostFields($fields)
-                   ->setHeader(['Accept' => 'application/json']);
-
-        $data = json_decode($this->http->execute());
+        $data = $response->object();
 
 
         if (isset($data->access_token)) {
-            $this->setAccessToken($data->access_token);
-            $this->setOrcid($data->orcid);
-            $this->setRefreshToken($data->refresh_token);
-            $this->setName($data->name);
-            $this->setExpireIn($data->expires_in);
-            $this->setAuthenticateData((array)$data);
+            $this->accessToken($data->access_token)
+                ->orcid($data->orcid)
+                ->refreshToken($data->refresh_token)
+                ->name($data->name)
+                ->expiresIn($data->expires_in)
+                ->authenticateData((array) $data);
         } else {
-            // Seems like the response format changes on occasion...not sure what's going on there?
-            $error = (isset($data->error_description)) ? $data->error_description : $data->{'error-desc'}->value;
+            // Seems like the response format changes on occasion… not sure what's going on there?
+            $error = $data->error_description ?? $data->{'error-desc'}->value;
 
-            throw new Exception($error);
+            throw new RuntimeException($error);
         }
 
         return $this;
@@ -545,12 +191,10 @@ class Oauth
 
     /**
      * Checks for access token to indicate authentication
-     *
-     * @return  bool
      **/
-    public function isAuthenticated()
+    public function isAuthenticated(): bool
     {
-        return ($this->getAccessToken()) ? true : false;
+        return !empty($this->accessToken());
     }
 
     /**
@@ -560,76 +204,39 @@ class Oauth
      * But, in theory, you could call this without oauth and pass in a ORCID iD,
      * assuming you use the public API endpoint.
      *
-     * @param   string  $orcid  the orcid to look up, if not already set as class prop
-     * @return  object
-     * @throws  Exception
-     **/
-    public function getProfile($orcid = null)
-    {
-        if (!is_resource($this->http->getResource())) {
-            $this->http->initialize();
-        }
-
-        $this->http->setUrl($this->getApiEndpoint('record', $orcid));
-
-        if ($this->level == 'api') {
-            // If using the members api, we have to have an access token set
-            if (!$this->getAccessToken()) {
-                throw new Exception('You must first set an access token or authenticate');
+     * @param string|null $orcid the orcid to look up, if not already set as class property.
+     */
+    public function getProfile(string $orcid = null): object {
+        $client = $this->client();
+        if ($this->membersApi()) {
+            // If using the members api, we have to have an access token set.
+            if (!$this->accessToken()) {
+                throw new RuntimeException('You must first set an access token or authenticate');
             }
 
-            $this->http->setHeader([
-                'Content-Type'  => 'application/vnd.orcid+json',
-                'Authorization' => 'Bearer ' . $this->getAccessToken()
-            ]);
-        } else {
-            $this->http->setHeader('Accept: application/vnd.orcid+json');
+            $client = $client->withToken($this->accessToken());
         }
 
-        return json_decode($this->http->execute());
+        $response = $client
+            ->accept('application/vnd.orcid+json')
+            ->get($this->getApiEndpoint('record', $orcid));
+
+        return $response->object();
     }
 
     /**
      * Creates the qualified api endpoint for retrieving the desired data
      *
-     * @param   string  $endpoint  the shortname of the endpoint
-     * @param   string  $orcid     the orcid to look up, if not already specified
-     * @return  string
-     **/
-    public function getApiEndpoint($endpoint, $orcid = null)
-    {
-        $url  = 'https://';
-        $url .= $this->level . '.';
-        $url .= (!empty($this->environment)) ? $this->environment . '.' : '';
-        $url .= self::HOSTNAME;
-        $url .= '/v' . self::VERSION . '/';
-        $url .= $orcid ?: $this->getOrcid();
-        $url .= '/' . $endpoint;
-
-        return $url;
-    }
-
-    /**
-     * @return array
+     * @param string|null $endpoint the shortname of the endpoint
+     * @param string|null $orcid the orcid to look up, if not already specified
      */
-    public function getAuthenticateData()
+    public function getApiEndpoint(string $endpoint = null, string $orcid = null): string
     {
-        return $this->authenticateData;
+        return ($this->orcid() ?? $orcid) . "/$endpoint";
     }
 
-    /**
-     * @param array $authenticateData
-     */
-    public function setAuthenticateData($authenticateData)
-    {
-        $this->authenticateData = $authenticateData;
-    }
-
-    /**
-    * @return string
-    */
-    public function getEnvironment()
-    {
-        return $this->environment;
+    public function client(): PendingRequest {
+        return (new Factory())
+            ->baseUrl('https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME));
     }
 }

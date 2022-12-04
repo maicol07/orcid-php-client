@@ -2,89 +2,47 @@
 
 namespace Orcid\Work;
 
+use function array_key_exists;
+
 trait ODataValidator
 {
-    //data validator
-    public static function isValidLanguageCode($languageCode)
-    {
-        return in_array(self::tryToNormalizeLanguageCode($languageCode), OAwork::LANGAGE_CODES);
-    }
-
-    public static function isValidCountryCode($country)
-    {
-        return in_array(self::tryToNormalizeCountryCode($country), OAwork::COUNTRY_CODES);
-    }
-
-    public static function isValidWorkType($type)
-    {
-        return in_array(self::tryToNormalizeWorkType($type), OAwork::WORK_TYPES);
-    }
-
-    public static function isValidAuthorRole($role)
-    {
-        return in_array(self::tryToNormalizeAuthorRole($role), OAwork::AUTHOR_ROLE_TYPE);
-    }
-
-    public static function isValidCitationType($citationType)
-    {
-        return in_array(self::tryToNormalizeCitationType($citationType), OAwork::CITATION_FORMATS);
-    }
-
-    public static function isValidAuthorSequence($sequence)
-    {
-        return in_array(self::tryToNormalizeAuthorSequence($sequence), OAwork::AUTHOR_SEQUENCE_TYPE);
-    }
-    public static function isValidExternalIdType($idType)
-    {
-        return in_array(self::tryToNormalizeExternalIdType($idType), OAwork::EXTENAL_ID_TYPE);
-    }
-
-    public static function isValidExternalIdRelationType($idType)
-    {
-        return in_array(self::tryToNormalizeExternalIdRelationType($idType), OAwork::EXTERNAL_ID_RELATION_TYPE);
-    }
-
-
-
-
-
     //data normalizer
-    protected static function tryToNormalizeLanguageCode($languageCode)
+    protected static function tryToNormalizeLanguageCode(string $languageCode): bool
     {
-        $language_code=str_replace("-", "_", strtolower(trim($languageCode)));
-        return array_key_exists($language_code, OAwork::SPECIAL_LANGAGE_CODES) ? OAwork::SPECIAL_LANGAGE_CODES[$language_code] : $language_code;
+        $language_code = str_replace('-', '_', strtolower(trim($languageCode)));
+        /** @noinspection OffsetOperationsInspection */
+        return array_key_exists(
+            $language_code,
+            OAwork::SPECIAL_LANGAGE_CODES
+        ) ? OAwork::SPECIAL_LANGAGE_CODES[$language_code] : $language_code;
     }
 
-    protected static function tryToNormalizeCountryCode($country)
+    protected static function tryToNormalizeCountryCode(string $country): string
     {
         return strtoupper(trim($country));
     }
 
-    protected static function tryToNormalizeWorkType($type)
+    protected static function tryToNormalizeWorkType(string $type): string
     {
-        return str_replace("_", "-", strtolower(trim($type)));
+        return str_replace('_', '-', strtolower(trim($type)));
     }
 
-    protected static function tryToNormalizeAuthorRole($role)
+    protected static function tryToNormalizeAuthorRole(string $role): string
     {
         return str_replace('_', '-', strtolower(trim($role)));
     }
 
-    protected static function tryToNormalizeCitationType($citationType)
+    protected static function tryToNormalizeCitationType(string $citationType): string
     {
         return str_replace('_', '-', strtolower(trim($citationType)));
     }
 
-    protected static function tryToNormalizeAuthorSequence($sequence)
+    protected static function tryToNormalizeAuthorSequence(string $sequence): string
     {
         return strtolower(trim($sequence));
     }
 
-    public static function tryToNormalizeExternalIdType($extIdType)
-    {
-        return str_replace('_', '-', strtolower(trim($extIdType)));
-    }
-    public static function tryToNormalizeExternalIdRelationType($type)
+    public static function tryToNormalizeExternalIdRelationType(string $type): string
     {
         return str_replace('_', '-', strtolower(trim($type)));
     }

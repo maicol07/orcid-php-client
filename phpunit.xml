@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
-         bootstrap="phpunit.php"
->
-    <testsuites>
-        <testsuite name="ORCID PHP Test Suite">
-            <directory suffix="Test.php">./tests</directory>
-        </testsuite>
-    </testsuites>
-    <logging>
-        <log type="coverage-clover" target="build/logs/clover.xml"/>
-    </logging>
-    <listeners>
-        <listener class="\Mockery\Adapter\Phpunit\TestListener"></listener>
-    </listeners>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" backupGlobals="false" bootstrap="phpunit.php" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage>
+    <report>
+      <clover outputFile="build/logs/clover.xml"/>
+    </report>
+  </coverage>
+  <testsuites>
+    <testsuite name="ORCID PHP Test Suite">
+      <directory suffix="Test.php">./tests</directory>
+    </testsuite>
+  </testsuites>
+  <logging/>
 </phpunit>

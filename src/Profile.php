@@ -8,52 +8,45 @@
 
 namespace Orcid;
 
+use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
+
+use function is_array;
+
 /**
  * ORCID profile API class
  **/
 class Profile
 {
-    /**
-     * The oauth object
-     *
-     * @var  object
-     **/
-    private $oauth = null;
+    private Oauth $oauth;
 
     /**
      * The raw orcid profile
-     *
-     * @var  object
      **/
-    private $raw = null;
+    private object $raw;
 
     /**
      * Constructs object instance
      *
-     * @param   object  $oauth  the oauth object used for making calls to orcid
-     * @return  void
-     **/
-    public function __construct($oauth = null)
+     * @param Oauth|null $oauth the oauth object used for making calls to orcid
+     */
+    public function __construct(Oauth $oauth = null)
     {
         $this->oauth = $oauth;
     }
 
     /**
      * Grabs the ORCID iD
-     *
-     * @return  string
-     **/
-    public function id()
+     */
+    public function id(): string
     {
-        return $this->oauth->getOrcid();
+        return $this->oauth->orcid();
     }
 
     /**
      * Grabs the orcid profile (oauth client must have requested this level or access)
-     *
-     * @return  object
-     **/
-    public function raw()
+     */
+    public function raw(): object
     {
         if (!isset($this->raw)) {
             $this->raw = $this->oauth->getProfile($this->id());
@@ -64,10 +57,8 @@ class Profile
 
     /**
      * Grabs the ORCID person
-     *
-     * @return  object
      **/
-    public function person()
+    public function person(): object
     {
         $this->raw();
 
@@ -75,34 +66,30 @@ class Profile
     }
 
     /**
-     * Grabs the users email if it's set and available
+     * Grabs the users email if it is set and available
      *
-     * @return  string|null
+     * @throws GuzzleException|JsonException
      **/
-    public function email()
+    public function email(): ?string
     {
         $this->raw();
 
         $email = null;
         $person = $this->person();
 
-        if (isset($person->emails)) {
-            if (isset($person->emails->email)) {
-                if (is_array($person->emails->email) && isset($person->emails->email[0])) {
-                    $email = $person->emails->email[0]->value;
-                }
-            }
+        if (isset($person->emails->email[0]) && is_array($person->emails->email)) {
+            $email = $person->emails->email[0]->value;
         }
 
         return $email;
     }
 
     /**
-     * Grabs the raw name elements to create fullname
+     * Grabs the raw name elements to create fullname.
      *
-     * @return  string
+     * @throws GuzzleException|JsonException
      **/
-    public function fullName()
+    public function fullName(): string
     {
         $this->raw();
         $details = $this->person()->name;
