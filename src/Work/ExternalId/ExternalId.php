@@ -20,9 +20,5 @@ class ExternalId
         if (empty($this->value)) {
             throw new RuntimeException('ExternalId value cannot be empty');
         }
-
-        if (empty($this->url)) {
-            throw new RuntimeException('ExternalId url cannot be empty');
-        }
     }
 }
