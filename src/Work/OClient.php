@@ -88,7 +88,7 @@ class OClient
 
     /**
      * @param int|string|int[]|string[] $putCode
-     * @throws JsonException|GuzzleException
+     * @throws JsonException
      */
     public function read(int|string|array $putCode): OResponse
     {
@@ -109,7 +109,7 @@ class OClient
     }
 
     /**
-     * @throws GuzzleException|JsonException
+     * @throws JsonException
      */
     protected function postOne(string $data, bool $json_data_format = false): OResponse
     {
