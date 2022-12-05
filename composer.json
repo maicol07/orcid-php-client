@@ -1,5 +1,13 @@
 {
-  "name": "tkouchoanou/orcid-php-client",
+  "name": "maicol07/orcid-php-client",
+  "authors": [
+    {
+      "name": "Maicol Battistini",
+      "email": "webmaster@maicol07.it",
+      "homepage": "https://maicol07.it",
+      "role": "Developer"
+    }
+  ],
   "description": "Library for ORCID web services",
   "keywords": [
     "orcid",
