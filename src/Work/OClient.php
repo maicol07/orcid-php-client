@@ -44,9 +44,16 @@ class OClient
     {
         $contentType = $json_response ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->get($this->oauth->getApiEndpoint('works'));
+            ->get($this->oauth->getApiEndpoint('works'), [
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->get($this->oauth->getApiEndpoint('works'));
 
         return new OResponse($response);
     }
@@ -58,9 +65,17 @@ class OClient
     {
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->get($this->oauth->getApiEndpoint('work') . '/' . $put_code);
+            ->get($this->oauth->getApiEndpoint('work') . '/' . $put_code, [
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+//        $response = $this->oauth->client()
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->get($this->oauth->getApiEndpoint('work') . '/' . $put_code);
         return new OResponse($response);
     }
 
@@ -80,9 +95,17 @@ class OClient
 
         $put_codes_list = implode(',', $put_codes);
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->get($this->oauth->getApiEndpoint('works') . '/' . $put_codes_list);
+            ->get($this->oauth->getApiEndpoint('work') . '/' . $put_codes_list, [
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+//        $response = $this->oauth->client()
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->get($this->oauth->getApiEndpoint('works') . '/' . $put_codes_list);
         return new OResponse($response);
     }
 
@@ -115,9 +138,18 @@ class OClient
     {
         $contentType = $json_data_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->post($this->oauth->getApiEndpoint('work'), $data);
+            ->post($this->oauth->getApiEndpoint('work'), [
+                'form_params' => $data,
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+//        $response = $this->oauth->client()
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->post($this->oauth->getApiEndpoint('work'), $data);
         return new OResponse($response);
     }
 
@@ -128,9 +160,18 @@ class OClient
     {
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->post($this->oauth->getApiEndpoint('works'), $data);
+            ->post($this->oauth->getApiEndpoint('work'), [
+                'form_params' => $data,
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+//        $response = $this->oauth->client()
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->post($this->oauth->getApiEndpoint('works'), $data);
         return new OResponse($response);
     }
 
@@ -142,11 +183,20 @@ class OClient
         $putCode = $work->putCode();
         $data = $work->getXMLData();
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
-
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->post($this->oauth->getApiEndpoint('work/' . $putCode), $data);
+            ->post($this->oauth->getApiEndpoint('work/' . $putCode), [
+                'form_params' => $data,
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+
+//        $response = $this->oauth->client()
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->post($this->oauth->getApiEndpoint('work/' . $putCode), $data);
         return new OResponse($response);
     }
 
@@ -157,9 +207,17 @@ class OClient
     {
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->accept($contentType)
-            ->withToken($this->oauth->accessToken())
-            ->delete($this->oauth->getApiEndpoint('work/' . $putCode));
+            ->delete($this->oauth->getApiEndpoint('work/' . $putCode), [
+                'headers' => [
+                    'Accept' => $contentType,
+                    'Content-Type' => $contentType,
+                    'Authorization' => 'Bearer ' . $this->oauth->accessToken(),
+                ],
+            ]);
+//        $response = $this->oauth->client()
+//            ->accept($contentType)
+//            ->withToken($this->oauth->accessToken())
+//            ->delete($this->oauth->getApiEndpoint('work/' . $putCode));
         return new OResponse($response);
     }
 }

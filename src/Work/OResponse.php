@@ -1,7 +1,7 @@
 <?php
 namespace Orcid\Work;
 
-use Illuminate\Http\Client\Response;
+//use Illuminate\Http\Client\Response;
 use JsonException;
 use Psr\Http\Message\ResponseInterface;
 
@@ -17,21 +17,23 @@ class OResponse
     public readonly ?string $error_code;
     public readonly ?string $more_info;
     private ?Works $work_records = null;
+    private string $body;
 
     /**
      * @throws JsonException
      */
     public function __construct(
-        public readonly Response $response
+        public readonly ResponseInterface $response
+//        public readonly Response $response
     ) {
-        $body = $this->response->body();
-        if (self::isXmlString($body)) {
-            $xml = simplexml_load_string($body);
-            $body = json_encode($xml, JSON_THROW_ON_ERROR);
-            $json = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
-        } else {
-            $json = $this->response->object();
+//        $body = $this->response->body();
+        $this->body = $this->response->getBody()->getContents();
+        if (self::isXmlString($this->body)) {
+            $xml = simplexml_load_string($this->body);
+            $this->body = json_encode($xml, JSON_THROW_ON_ERROR);
         }
+        $json = json_decode($this->body, false, 512, JSON_THROW_ON_ERROR);
+
         $this->developer_message = $json->error ?? $json->{'developer-message'} ?? null;
         $this->user_message = $json->{'user-message'} ?? null;
         $this->error_code = $json->{'error-code'} ?? null;
@@ -40,10 +42,12 @@ class OResponse
 
     protected function setWorkRecords(): self
     {
-        $records = $this->response->json();
+//        $records = $this->response->json();
+        $records = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
         if (isset($records['last-modified-date'], $records['group'], $records['path'])) {
             $records = array_column(array_column($records['group'], 'work-summary'), 0);
-        } else { // Bulk
+        } elseif (isset($records['bulk'])) { // Bulk
+//            dd($this->response, $records);
             $records = array_column($records['bulk'], 'work');
         }
         $this->work_records = new Works($records);
@@ -52,6 +56,7 @@ class OResponse
 
     /**
      * @return Works<Work>
+     * @throws JsonException
      */
     public function getWorkRecords(): Works
     {
@@ -64,7 +69,8 @@ class OResponse
     public function getErrorCode(): int|string|null
     {
         if (empty($this->error_code) && !$this->hasSuccess() && !$this->hasConflict()) {
-            return $this->response->status();
+//            return $this->response->status();
+            return $this->response->getStatusCode();
         }
         return $this->error_code;
     }
@@ -76,12 +82,12 @@ class OResponse
 
     public function hasSuccess(): bool
     {
-        return in_array($this->response->status(), self::SUCCESS_CODE);
+        return in_array($this->response->getStatusCode(), self::SUCCESS_CODE, true);
     }
 
     public function hasConflict(): bool
     {
-        return $this->response->status() === 409;
+        return $this->response->getStatusCode() === 409;
     }
 
     private static function isXmlString(string $xmlString): false|int

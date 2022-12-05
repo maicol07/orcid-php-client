@@ -5,8 +5,8 @@ namespace Orcid;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-use Illuminate\Http\Client\Factory;
-use Illuminate\Http\Client\PendingRequest;
+//use Illuminate\Http\Client\Factory;
+//use Illuminate\Http\Client\PendingRequest;
 use JsonException;
 use RuntimeException;
 
@@ -165,12 +165,18 @@ class Oauth extends DynamicClass
         ];
 
         $response = $this->client()
-            ->acceptJson()
-            ->asForm()
-            ->post($this->getApiEndpoint('oauth/token'), $fields);
+            ->post($this->getApiEndpoint('oauth/token'), [
+                'form_params' => $fields,
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
+            ]);
+//            ->acceptJson()
+//            ->asForm()
+//            ->post($this->getApiEndpoint('oauth/token'), $fields);
 
-        $data = $response->object();
-
+//        $data = $response->object();
+        $data = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
 
         if (isset($data->access_token)) {
             $this->accessToken($data->access_token)
@@ -208,20 +214,28 @@ class Oauth extends DynamicClass
      */
     public function getProfile(string $orcid = null): object {
         $client = $this->client();
+        $headers = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ];
         if ($this->membersApi()) {
             // If using the members api, we have to have an access token set.
             if (!$this->accessToken()) {
                 throw new RuntimeException('You must first set an access token or authenticate');
             }
 
-            $client = $client->withToken($this->accessToken());
+//            $client = $client->withToken($this->accessToken());
         }
 
-        $response = $client
-            ->accept('application/vnd.orcid+json')
-            ->get($this->getApiEndpoint('record', $orcid));
+//        $response = $client
+//            ->accept('application/vnd.orcid+json')
+//            ->get($this->getApiEndpoint('record', $orcid));
+        $response = $client->get($this->getApiEndpoint('record', $orcid), [
+            'headers' => $headers
+        ]);
 
-        return $response->object();
+//        return $response->object();
+        return json_decode($response->getBody()->getContents(), false, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -235,8 +249,11 @@ class Oauth extends DynamicClass
         return ($this->orcid() ?? $orcid) . "/$endpoint";
     }
 
-    public function client(): PendingRequest {
-        return (new Factory())
-            ->baseUrl('https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME));
+    public function client(): Client { // PendingRequest {
+//        return (new Factory())
+//            ->baseUrl('https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME));
+        return new Client([
+            'base_uri' => 'https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME)
+        ]);
     }
 }

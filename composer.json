@@ -26,8 +26,7 @@
     "ext-simplexml": "*",
     "ext-dom": "*",
     "guzzlehttp/guzzle": ">=6",
-    "illuminate/http": ">=6",
-    "illuminate/support": ">=6",
+    "illuminate/support": ">=7",
     "prinsfrank/standards": "^1"
   },
   "require-dev": {

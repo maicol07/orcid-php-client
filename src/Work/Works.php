@@ -2,6 +2,7 @@
 
 namespace Orcid\Work;
 
+use ArrayAccess;
 use ArrayIterator;
 use Carbon\Carbon;
 use DOMException;
@@ -21,7 +22,7 @@ use function count;
 /**
  * @template <T = Work>
  */
-class Works implements IteratorAggregate, \ArrayAccess
+class Works implements IteratorAggregate, ArrayAccess
 {
     public array $works;
 
