@@ -6,7 +6,6 @@ use ArrayAccess;
 use ArrayIterator;
 use Carbon\Carbon;
 use DOMException;
-use Illuminate\Support\Str;
 use Iterator;
 use IteratorAggregate;
 use Orcid\Work\ExternalId\ExternalIdRelationship;
@@ -14,10 +13,9 @@ use Orcid\Work\ExternalId\ExternalIdType;
 use PrinsFrank\Standards\Language\ISO639_1_Alpha_2;
 use RuntimeException;
 
-use Traversable;
-
 use function assert;
 use function count;
+use function is_array;
 
 /**
  * @template <T = Work>
@@ -39,7 +37,6 @@ class Works implements IteratorAggregate, ArrayAccess
                 ->type(WorkType::from($work['type']))
                 ->path($work['path'])
                 ->visibility($work['visibility'])
-                ->citation($work['citation']['citation-value'], CitationType::from($work['citation']['citation-type']))
                 ->publicationDate(
                     Carbon::create(
                         $work['publication-date']['year']['value'] ?? null,
@@ -62,6 +59,11 @@ class Works implements IteratorAggregate, ArrayAccess
             }
             if (!empty($subTitle)) {
                 $new_work->subtitle($subTitle);
+            }
+
+            $citation = $work['citation'] ?? null;
+            if (is_array($citation)) {
+                $new_work->citation($citation['citation-value'], CitationType::tryFrom($citation['citation-type']) ?? CitationType::FORMATTED_UNSPECIFIED);
             }
 
             foreach ($externalIdArray as $externalId) {

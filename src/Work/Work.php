@@ -60,7 +60,7 @@ class Work extends OAwork
                 break;
             case 'citation':
                 $citation_type = $arguments[1] ?? null;
-                if (empty($citation_type)) {
+                if (!empty($citation_type)) {
                     $this->citation_type = CitationType::FORMATTED_UNSPECIFIED;
                 }
         }
