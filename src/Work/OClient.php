@@ -74,8 +74,8 @@ class OClient
         if (empty($put_codes)) {
             throw new RuntimeException('the work put-code array (worksIdArray) must not be empty');
         }
-        if (count($put_codes) > 50) {
-            throw new RuntimeException("you can't read more than 50 Work your work id array length is more than 50");
+        if (count($put_codes) > 100) {
+            throw new RuntimeException("You can't read more than 100 Work your work id array length is more than 100");
         }
 
         $put_codes_list = implode(',', $put_codes);
