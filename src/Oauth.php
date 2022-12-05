@@ -12,7 +12,7 @@ use RuntimeException;
 
 use function strlen;
 
-const ORCID_API_HOSTNAME = 'api.orcid.org/v3.0/';
+const ORCID_API_HOSTNAME = 'orcid.org/v3.0/';
 const ORCID_SANDBOX_HOSTNAME = 'sandbox.orcid.org/v3.0/';
 
 /**
@@ -253,7 +253,7 @@ class Oauth extends DynamicClass
 //        return (new Factory())
 //            ->baseUrl('https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME));
         return new Client([
-            'base_uri' => 'https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME)
+            'base_uri' => 'https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox() ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME)
         ]);
     }
 }
