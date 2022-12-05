@@ -95,7 +95,7 @@ class OClient
 
         $put_codes_list = implode(',', $put_codes);
         $response = $this->oauth->client()
-            ->get($this->oauth->getApiEndpoint('work') . '/' . $put_codes_list, [
+            ->get($this->oauth->getApiEndpoint('works') . '/' . $put_codes_list, [
                 'headers' => [
                     'Accept' => $contentType,
                     'Content-Type' => $contentType,
@@ -160,7 +160,7 @@ class OClient
     {
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->post($this->oauth->getApiEndpoint('work'), [
+            ->post($this->oauth->getApiEndpoint('works'), [
                 'form_params' => $data,
                 'headers' => [
                     'Accept' => $contentType,
