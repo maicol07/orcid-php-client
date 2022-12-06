@@ -224,6 +224,7 @@ class Oauth extends DynamicClass
                 throw new RuntimeException('You must first set an access token or authenticate');
             }
 
+            $headers['Authorization'] = 'Bearer ' . $this->accessToken();
 //            $client = $client->withToken($this->accessToken());
         }
 
