@@ -44,13 +44,20 @@ class OResponse
     {
 //        $records = $this->response->json();
         $records = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
+
         if (isset($records['last-modified-date'], $records['group'], $records['path'])) {
             $records = array_column(array_column($records['group'], 'work-summary'), 0);
         } elseif (isset($records['bulk'])) { // Bulk
 //            dd($this->response, $records);
             $records = array_column($records['bulk'], 'work');
         }
-        $this->work_records = new Works($records);
+
+        if (count($records) >= 100) {
+            $this->work_records = new Works(array_splice($records, 0, 100));
+        }
+        else{
+            $this->work_records = new Works($records);
+        }
         return $this;
     }
 
