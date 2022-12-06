@@ -47,7 +47,7 @@ class Work extends OAwork
     protected ?ISO639_1_Alpha_2 $language_code = null;
     protected ?CitationType $citation_type = null;
     protected ?ISO3166_1_Alpha_2 $country = null;
-    protected string $url;
+    protected string $url = '';
 
     protected function _property_setter(string $property, array $arguments): void
     {
