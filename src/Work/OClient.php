@@ -39,6 +39,7 @@ class OClient
 
     /**
      * @throws JsonException
+     * @throws GuzzleException
      */
     public function readSummary(bool $json_response = true): OResponse
     {
@@ -60,6 +61,7 @@ class OClient
 
     /**
      * @throws JsonException
+     * @throws GuzzleException
      */
     public function readSingle(int|string $put_code, bool $data_json_format = true): OResponse
     {
@@ -82,6 +84,7 @@ class OClient
     /**
      * @param int[]|string[] $put_codes
      * @throws JsonException
+     * @throws GuzzleException
      */
     public function readMultiple(array $put_codes, bool $data_json_format = true): OResponse
     {
@@ -133,6 +136,7 @@ class OClient
 
     /**
      * @throws JsonException
+     * @throws GuzzleException
      */
     protected function postOne(string $data, bool $json_data_format = false): OResponse
     {
@@ -155,6 +159,7 @@ class OClient
 
     /**
      * @throws JsonException
+     * @throws GuzzleException
      */
     protected function postMultiple(string $data, bool $data_json_format = false): OResponse
     {
@@ -177,6 +182,7 @@ class OClient
 
     /**
      * @throws DOMException|JsonException
+     * @throws GuzzleException
      */
     public function update(Work $work, bool $data_json_format = false): OResponse
     {
@@ -202,6 +208,7 @@ class OClient
 
     /**
      * @throws JsonException
+     * @throws GuzzleException
      */
     public function delete(int|string $putCode, bool $data_json_format = true): OResponse
     {

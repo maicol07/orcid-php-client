@@ -45,6 +45,8 @@ class Profile
 
     /**
      * Grabs the orcid profile (oauth client must have requested this level or access)
+     *
+     * @throws JsonException|GuzzleException
      */
     public function raw(): object
     {

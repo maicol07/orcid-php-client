@@ -40,6 +40,9 @@ class OResponse
         $this->more_info = $json->{'more-info'} ?? null;
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function setWorkRecords(): self
     {
 //        $records = $this->response->json();

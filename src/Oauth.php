@@ -135,6 +135,8 @@ class Oauth extends DynamicClass
      * @param string $code the oauth code needed to request the access token
      * @return  $this
      * @throws  RuntimeException
+     * @throws JsonException
+     * @throws GuzzleException
      **/
     public function authenticate(string $code): self
     {
@@ -211,6 +213,8 @@ class Oauth extends DynamicClass
      * assuming you use the public API endpoint.
      *
      * @param string|null $orcid the orcid to look up, if not already set as class property.
+     * @throws JsonException
+     * @throws GuzzleException
      */
     public function getProfile(string $orcid = null): object {
         $client = $this->client();
