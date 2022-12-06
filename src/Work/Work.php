@@ -59,10 +59,7 @@ class Work extends OAwork
                 }
                 break;
             case 'citation':
-                $citation_type = $arguments[1] ?? null;
-                if (!empty($citation_type)) {
-                    $this->citation_type = CitationType::FORMATTED_UNSPECIFIED;
-                }
+                $this->citation_type = $arguments[1] ?? CitationType::FORMATTED_UNSPECIFIED;
         }
         parent::_property_setter($property, [$value]);
     }
