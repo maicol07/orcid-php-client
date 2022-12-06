@@ -80,13 +80,15 @@ class Works implements IteratorAggregate, ArrayAccess
             }
 
             foreach ($work['contributors']['contributor'] ?? [] as $index => $contributor) {
-                $new_work->addContributor(
-                    $contributor['credit-name']['value'],
-                    ContributorRole::from($contributor['contributor-attributes']['contributor-role'] ?? ContributorRole::AUTHOR->value),
-                    $contributor['contributor-orcid']['path'] ?? '',
-                    ContributorSequence::from($contributor['contributor-attributes']['contributor-sequence'] ?? ($index === 0 ? ContributorSequence::FIRST : ContributorSequence::ADDITIONAL)->value),
-                    str_contains($contributor['contributor-orcid']['path'] ?? '', 'sandbox')
-                );
+                if (!empty($contributor['credit-name']['value'])) {
+                    $new_work->addContributor(
+                        $contributor['credit-name']['value'],
+                        ContributorRole::from($contributor['contributor-attributes']['contributor-role'] ?? ContributorRole::AUTHOR->value),
+                        $contributor['contributor-orcid']['path'] ?? '',
+                        ContributorSequence::from($contributor['contributor-attributes']['contributor-sequence'] ?? ($index === 0 ? ContributorSequence::FIRST : ContributorSequence::ADDITIONAL)->value),
+                        str_contains($contributor['contributor-orcid']['path'] ?? '', 'sandbox')
+                    );
+                }
             }
 
             $this->append($new_work);
