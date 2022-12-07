@@ -16,7 +16,7 @@ enum WorkType: string
     case DATA_SET = 'data-set';
     case DICTIONARY_ENTRY = 'dictionary-entry';
     case DISCLOSURE = 'disclosure';
-    case DISSERTATION_THESIS = 'dissertation';
+    case DISSERTATION_THESIS = 'dissertation-thesis';
     case EDITED_BOOK = 'edited-book';
     case ENCYCLOPEDIA_ENTRY = 'encyclopedia-entry';
     case INVENTION = 'invention';
