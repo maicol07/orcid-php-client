@@ -5,6 +5,6 @@ namespace Orcid\Work;
 enum WorkVisibility: string
 {
     case PUBLIC = 'public';
-    case TRUSTED_PARTIES = 'trusted-parties';
+    case LIMITED_TO_TRUSTED_PARTIES = 'limited';
     case PRIVATE = 'private';
 }
