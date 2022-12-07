@@ -22,7 +22,7 @@ use function is_array;
  */
 class Works implements IteratorAggregate, ArrayAccess
 {
-    public array $works;
+    public array $works = [];
 
     /** @noinspection UnusedFunctionResultInspection */
     public function __construct(array $works = [])
