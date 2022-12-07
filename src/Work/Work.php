@@ -12,7 +12,7 @@ use function strlen;
  * @method string|$this source(string $source = null)
  * @method string|$this lastModifiedDate(string $lastModifiedDate = null)
  * @method string|$this createdDate(string $createdDate = null)
- * @method string|$this visibility(string $visibility = null)
+ * @method WorkVisibility|$this visibility(WorkVisibility $visibility = null)
  * @method string|$this path(?string $path = null)
  * @method string|$this journalTitle(string $journalTitle = null)
  * @method string|$this shortDescription(string $shortDescription = null)
@@ -30,7 +30,7 @@ class Work extends OAwork
     protected int $last_modified_date;
     protected string $source;
     protected int $created_date;
-    protected string $visibility;
+    protected WorkVisibility $visibility = WorkVisibility::PUBLIC;
     protected ?string $path = null;
 
     public static string $namespaceWork = 'http://www.orcid.org/ns/work';

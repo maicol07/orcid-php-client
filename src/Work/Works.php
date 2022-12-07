@@ -36,7 +36,7 @@ class Works implements IteratorAggregate, ArrayAccess
                 ->createdDate($work['created-date']['value'])
                 ->type(WorkType::from($work['type']))
                 ->path($work['path'])
-                ->visibility($work['visibility'])
+                ->visibility(WorkVisibility::from($work['visibility']))
                 ->publicationDate(
                     Carbon::create(
                         $work['publication-date']['year']['value'] ?? null,
