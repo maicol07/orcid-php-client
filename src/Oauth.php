@@ -12,8 +12,8 @@ use RuntimeException;
 
 use function strlen;
 
-const ORCID_API_HOSTNAME = 'orcid.org/v3.0/';
-const ORCID_SANDBOX_HOSTNAME = 'sandbox.orcid.org/v3.0/';
+const ORCID_API_HOSTNAME = 'orcid.org';
+const ORCID_SANDBOX_HOSTNAME = 'sandbox.orcid.org';
 
 /**
  * Orcid api oauth class.
@@ -54,16 +54,16 @@ class Oauth extends DynamicClass
     protected string $redirect_uri;
 
     /** The login/registration page email address */
-    protected string $email;
+    protected ?string $email = null;
 
     /** The login/registration page orcid */
-    protected string $orcid;
+    protected ?string $orcid = null;
 
     /** The login/registration page family name */
-    protected string $family_names;
+    protected ?string $family_names = null;
 
     /** The login/registration page given name */
-    protected string $given_names;
+    protected ?string $given_names = null;
 
     /** Whether to show the login page as opposed to the registration page. */
     protected bool $show_login = false;
@@ -115,10 +115,10 @@ class Oauth extends DynamicClass
 
 
         // Start building url (endpoint is the same for public and member APIs)
-        return $this->getApiEndpoint('oauth/authorize') . http_build_query([
+        return $this->getBaseUri(false) . $this->getApiEndpoint('oauth/authorize') . '?' . http_build_query([
             'client_id' => $this->clientId(),
             'response_type' => 'code',
-            'scope' => implode(' ', $this->scopes()),
+            'scope' => implode(' ', array_map(fn ($scope) => $scope instanceof ApiScopes ? $scope->value : $scope, $this->scopes())),
             'redirect_uri' => $this->redirectUri(),
             'state' => $this->state(),
             'show_login' => $this->showLogin(),
@@ -258,7 +258,12 @@ class Oauth extends DynamicClass
 //        return (new Factory())
 //            ->baseUrl('https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME));
         return new Client([
-            'base_uri' => 'https://' . ($this->membersApi() ? 'api' : 'pub') . '.' . ($this->sandbox() ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME)
+            'base_uri' => $this->getBaseUri()
         ]);
+    }
+
+    private function getBaseUri(bool $api = true): string {
+        $sub = $api ? ($this->membersApi() ? 'api' : 'pub') . '.' : '';
+        return 'https://' . $sub . ($this->sandbox() ? ORCID_SANDBOX_HOSTNAME : ORCID_API_HOSTNAME) . ($api ? '/v3.0/' : '/');
     }
 }
