@@ -32,11 +32,11 @@ abstract class OAwork extends DynamicClass
         'ZH_TW' => 'zh_TW'
     ];
 
-    protected string $put_code;
-    protected string $title;
+    protected string $put_code = '';
+    protected string $title = '';
     protected ?string $translated_title;
     protected ?ISO639_1_Alpha_2 $translated_title_language_code;
-    protected string $subtitle;
+    protected string $subtitle = '';
     protected Carbon $publication_date;
     /** @var ExternalId[] */
     protected array $externals = [];
@@ -79,7 +79,7 @@ abstract class OAwork extends DynamicClass
      *
      * @throws RuntimeException
      */
-    public function addExternalId(ExternalIdType $type, string $externalIdValue, string $externalIdUrl, ExternalIdRelationship $externalIdRelationship = null): self {
+    public function addExternalId(ExternalIdType $type, string $externalIdValue, string $externalIdUrl, ExternalIdRelationship $externalIdRelationship = ExternalIdRelationship::SELF): self {
         $this->externals[] = new ExternalId($type, $externalIdValue, $externalIdUrl, $externalIdRelationship);
         return $this;
     }

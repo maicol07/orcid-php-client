@@ -55,7 +55,7 @@ trait XMLWorkGeneration
         }
 
         if ($this->citation() !== null) {
-            $work->appendChild($this->nodeCitation($dom, $this->citationType()->value, $this->citation()));
+            $work->appendChild($this->nodeCitation($dom, $this->citationType(), $this->citation()));
         }
 
         // add work Type

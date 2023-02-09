@@ -143,7 +143,7 @@ class OClient
         $contentType = $json_data_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
             ->post($this->oauth->getApiEndpoint('work'), [
-                'form_params' => $data,
+                'data' => $data,
                 'headers' => [
                     'Accept' => $contentType,
                     'Content-Type' => $contentType,
