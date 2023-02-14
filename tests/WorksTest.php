@@ -1,7 +1,7 @@
 <?php
 
+use GuzzleHttp\Exception\ClientException;
 use Orcid\Work\Work;
-use Orcid\Work\Works;
 
 class WorksTest extends BaseTest
 {
@@ -22,5 +22,17 @@ class WorksTest extends BaseTest
             $this->assertInstanceOf(Work::class, $work);
         }
         $this->assertNotEmpty($works);
+    }
+
+    public function testSendOneRaw() {
+        $xml = env('ORCID_TEST_WORK_XML');
+        try {
+            $this->OClient()->sendRaw($xml);
+            $this->assertTrue(true);
+        } catch (ClientException $e) {
+            dump($e->getRequest(), $e->getRequest()->getBody()->getContents());
+            dump($e->getResponse(), $e->getResponse()->getBody()->getContents());
+            $this->fail();
+        }
     }
 }

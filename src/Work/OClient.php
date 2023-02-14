@@ -134,6 +134,11 @@ class OClient
         return $this->postMultiple($data);
     }
 
+    public function sendRaw(string $data, bool $json_data_format = false): OResponse
+    {
+        return $this->postOne($data, $json_data_format);
+    }
+
     /**
      * @throws JsonException
      * @throws GuzzleException
