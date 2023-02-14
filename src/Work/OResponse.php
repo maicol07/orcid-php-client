@@ -28,16 +28,23 @@ class OResponse
     ) {
 //        $body = $this->response->body();
         $this->body = $this->response->getBody()->getContents();
-        if (self::isXmlString($this->body)) {
-            $xml = simplexml_load_string($this->body);
-            $this->body = json_encode($xml, JSON_THROW_ON_ERROR);
-        }
-        $json = json_decode($this->body, false, 512, JSON_THROW_ON_ERROR);
+        if (!empty($this->body)) {
+            if (self::isXmlString($this->body)) {
+                $xml = simplexml_load_string($this->body);
+                $this->body = json_encode($xml, JSON_THROW_ON_ERROR);
+            }
+            $json = json_decode($this->body, false, 512, JSON_THROW_ON_ERROR);
 
-        $this->developer_message = $json->error ?? $json->{'developer-message'} ?? null;
-        $this->user_message = $json->{'user-message'} ?? null;
-        $this->error_code = $json->{'error-code'} ?? null;
-        $this->more_info = $json->{'more-info'} ?? null;
+            $this->developer_message = $json->error ?? $json->{'developer-message'} ?? null;
+            $this->user_message = $json->{'user-message'} ?? null;
+            $this->error_code = $json->{'error-code'} ?? null;
+            $this->more_info = $json->{'more-info'} ?? null;
+        } else {
+            $this->developer_message = null;
+            $this->user_message = null;
+            $this->error_code = null;
+            $this->more_info = null;
+        }
     }
 
     /**

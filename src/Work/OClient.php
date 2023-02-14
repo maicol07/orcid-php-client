@@ -143,7 +143,7 @@ class OClient
         $contentType = $json_data_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
             ->post($this->oauth->getApiEndpoint('work'), [
-                'data' => $data,
+                'body' => $data,
                 'headers' => [
                     'Accept' => $contentType,
                     'Content-Type' => $contentType,
@@ -166,7 +166,7 @@ class OClient
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
             ->post($this->oauth->getApiEndpoint('works'), [
-                'form_params' => $data,
+                'body' => $data,
                 'headers' => [
                     'Accept' => $contentType,
                     'Content-Type' => $contentType,
@@ -191,7 +191,7 @@ class OClient
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
             ->post($this->oauth->getApiEndpoint('work/' . $putCode), [
-                'form_params' => $data,
+                'body' => $data,
                 'headers' => [
                     'Accept' => $contentType,
                     'Content-Type' => $contentType,
