@@ -21,7 +21,7 @@ trait XMLWorkGeneration
     {
         $this->checkMetaValueAndThrowExceptionIfNecessary();
 
-        if ($this->putCode() !== null) {
+        if (!empty($this->putCode())) {
             $work->setAttribute('put-code', (int) $this->putCode());
         }
 
@@ -30,13 +30,13 @@ trait XMLWorkGeneration
         $title = $workTitle->appendChild($dom->createElementNS(self::$namespaceCommon, 'title'));
         $title->appendChild($dom->createCDATASection($this->title()));
 
-        if ($this->subtitle() !== null) {
+        if (!empty($this->subtitle())) {
             $subtitle = $workTitle->appendChild($dom->createElementNS(self::$namespaceCommon, 'subtitle'));
             $subtitle->appendChild($dom->createCDATASection($this->subtitle()));
         }
 
         //translatedTitleLanguageCode is required to send translatedTitle
-        if ($this->translatedTitle() !== null && $this->translatedTitleLanguageCode() !== null) {
+        if (!empty($this->translatedTitle()) && !empty($this->translatedTitleLanguageCode())) {
             $translatedTitle = $workTitle->appendChild(
                 $dom->createElementNS(self::$namespaceCommon, 'translated-title')
             );
@@ -44,17 +44,17 @@ trait XMLWorkGeneration
             $translatedTitle->setAttribute('language-code', $this->translatedTitleLanguageCode()->value);
         }
 
-        if ($this->journalTitle() !== null) {
+        if (!empty($this->journalTitle())) {
             $journalTitle = $work->appendChild($dom->createElementNS(self::$namespaceWork, 'journal-title'));
             $journalTitle->appendChild($dom->createCDATASection($this->journalTitle()));
         }
 
-        if ($this->shortDescription() !== null) {
+        if (!empty($this->shortDescription())) {
             $shortDescription = $work->appendChild($dom->createElementNS(self::$namespaceWork, 'short-description'));
             $shortDescription->appendChild($dom->createCDATASection($this->shortDescription()));
         }
 
-        if ($this->citation() !== null) {
+        if (!empty($this->citation())) {
             $work->appendChild($this->nodeCitation($dom, $this->citationType(), $this->citation()));
         }
 
@@ -62,7 +62,7 @@ trait XMLWorkGeneration
         $work->appendChild($dom->createElementNS(self::$namespaceWork, 'type', $this->type()->value));
 
         // add publication date
-        if ($this->publicationDate() !== null) {
+        if (!empty($this->publicationDate())) {
             $work->appendChild($this->dateNode($dom, $this->publicationDate()));
         }
 
@@ -72,7 +72,7 @@ trait XMLWorkGeneration
             $externalIds->appendChild($this->externalIdNode($dom, $externalId));
         }
 
-        if ($this->url() !== null) {
+        if (!empty($this->url())) {
             $work->appendChild($dom->createElementNS(self::$namespaceWork, 'url', $this->url()));
         }
 
@@ -90,11 +90,11 @@ trait XMLWorkGeneration
             }
         }
 
-        if ($this->languageCode() !== null) {
+        if (!empty($this->languageCode())) {
             $work->appendChild($dom->createElementNS(self::$namespaceCommon, 'language-code', $this->languageCode()->value));
         }
 
-        if ($this->country() !== null) {
+        if (!empty($this->country())) {
             $work->appendChild($dom->createElementNS(self::$namespaceCommon, 'country', $this->country()->value));
         }
 
@@ -225,7 +225,7 @@ trait XMLWorkGeneration
         $workNode->setAttributeNS(
             'http://www.w3.org/2001/XMLSchema-instance',
             'xsi:schemaLocation',
-            self::$namespaceWork . '/ work-2.0.xsd '
+            self::$namespaceWork . '/work-3.0.xsd '
         );
         $this->addMetaToWorkNode($dom, $workNode);
         return $dom->saveXML();
