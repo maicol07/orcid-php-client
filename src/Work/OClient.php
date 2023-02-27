@@ -195,7 +195,7 @@ class OClient
         $data = $work->getXMLData();
         $contentType = $data_json_format ? 'application/vnd.orcid+json' : 'application/vnd.orcid+xml';
         $response = $this->oauth->client()
-            ->post($this->oauth->getApiEndpoint('work/' . $putCode), [
+            ->put($this->oauth->getApiEndpoint('work/' . $putCode), [
                 'body' => $data,
                 'headers' => [
                     'Accept' => $contentType,
