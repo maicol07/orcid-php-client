@@ -178,7 +178,7 @@ class Oauth extends DynamicClass
 //            ->post($this->getApiEndpoint('oauth/token'), $fields);
 
 //        $data = $response->object();
-        $data = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($response->getBody()->getContents(), false, 512, JSON_THROW_ON_ERROR);
 
         if (isset($data->access_token)) {
             $this->accessToken($data->access_token)
