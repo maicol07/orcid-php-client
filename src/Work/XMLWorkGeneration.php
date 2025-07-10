@@ -73,7 +73,7 @@ trait XMLWorkGeneration
         }
 
         if (!empty($this->url())) {
-            $work->appendChild($dom->createElementNS(self::$namespaceWork, 'url', $this->url()));
+            $work->appendChild($dom->createElementNS(self::$namespaceCommon, 'url', $this->url()));
         }
 
         //add authors
